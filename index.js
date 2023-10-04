@@ -157,6 +157,20 @@ app.get('/api/getassignmentrefs', async (req, res) => {
     }
 })
 
+app.get('/api/getstudents', async (req, res) => {
+    const { token, course } = req.query;
+    const account = await get_user_token(token);
+    if (account == null){
+        res.status(404).send("Account not found");
+    }
+    if ( token != null) {
+        const students = await get_students_parent(account.id);
+        return res.status(201).json(students);
+    } else if (course != null) {
+        //add course finding here
+    }
+})
+
 app.post('/api/deleteassignment', async (req, res) => {
     // for create/delete, we need to remove them from the assignments table too
     const { token, id } = req.body;
@@ -169,6 +183,24 @@ app.post('/api/deleteassignment', async (req, res) => {
     if (course.teacher == teacherAccount.id) {
         try {
             await delete_course_assignment(id);
+            return res.status(201).send("Assignment deleted successfully");
+        } catch (error) {
+            return res.status(500).send("Internal Server Error");
+        }
+    }
+})
+
+app.post('/api/deletestudent', async (req, res) => {
+    // for create/delete, we need to remove them from the assignments table too
+    const { token, id } = req.body;
+    const account = await get_user_token(token);
+    const student = await get_student(id);
+    if (course == null || account == null){
+        return res.status(404).send("Account or student not found");
+    }
+    if (account.id == student.parent) {
+        try {
+            await delete_student(id);
             return res.status(201).send("Assignment deleted successfully");
         } catch (error) {
             return res.status(500).send("Internal Server Error");
@@ -402,6 +434,40 @@ async function get_course_assignments(id) {
                     resolve(null);
                 } else {
                     resolve(results);
+                }
+            }
+        );
+    });
+}
+
+async function get_students_parent(id) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'SELECT * FROM students WHERE parent = ?',
+            [id],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else if (results.length === 0) {
+                    resolve(null);
+                } else {
+                    resolve(results);
+                }
+            }
+        );
+    });
+}
+
+async function delete_student(id) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'DELETE FROM students WHERE id = ?',
+            [id],
+            (err, res) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(res);
                 }
             }
         );
