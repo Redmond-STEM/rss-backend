@@ -1,0 +1,1 @@
+INSERT INTO rss.courses (name, duration, time, capacity, teacher) VALUES ("PRECALCULUS", 5, "WEDNESDAY 5PM", 10, 48)

@@ -1,0 +1,1 @@
+INSERT INTO rss.users (email, username, auth_type) VALUES ("iyengar.dhruv@outlook.com", "Dhruv Iyengar", "teacher")

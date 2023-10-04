@@ -117,18 +117,62 @@ app.post('/api/createassignment', async (req, res) => {
             res.status(201).json({ message: 'Assignment added successfully', assignmentId: insertId });
         }
     } catch (error) {
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: "Internal Server Error" });
     }
 });
 
 app.post('/api/insertassignment', async (req, res) => {
     const { token, assignment } = req.body;
     const teacherAccount = await get_user_token(token);
-    const ref = await get_assignment_ref(assignment.ref_id);
+    const ref = await get_course_assignment(assignment.ref_id);
     const course = await get_course(ref.course);
     if (course.teacher == teacherAccount.id) {
         const insertId = await insert_assignment(assignment);
         res.status(201).json({ message: 'Assignment added successfully', assignmentId: insertId });
+    }
+})
+
+app.get('/api/getcourse', async (req, res) => { 
+    const { token, id } = req.query;
+    const teacherAccount = await get_user_token(token);
+    const course = await get_course(id);
+    if (course == null || teacherAccount == null){
+        res.status(404).send("Course or teacher not found");
+    }
+    if (course.teacher == teacherAccount.id) {
+        res.status(201).json(course);
+    }
+})
+
+app.get('/api/getassignmentrefs', async (req, res) => {
+    const { token, id } = req.query;
+    const teacherAccount = await get_user_token(token);
+    const course = await get_course(id);
+    if (course == null || teacherAccount == null){
+        res.status(404).send("Course or teacher not found");
+    }
+    if (course.teacher == teacherAccount.id) {
+        const assignments = await get_course_assignments(id);
+        return res.status(201).json(assignments);
+    }
+})
+
+app.post('/api/deleteassignment', async (req, res) => {
+    // for create/delete, we need to remove them from the assignments table too
+    const { token, id } = req.body;
+    const teacherAccount = await get_user_token(token);
+    const assignment = await get_course_assignment(id);
+    const course = await get_course(assignment.course);
+    if (course == null || teacherAccount == null){
+        return res.status(404).send("Course or teacher not found");
+    }
+    if (course.teacher == teacherAccount.id) {
+        try {
+            await delete_course_assignment(id);
+            return res.status(201).send("Assignment deleted successfully");
+        } catch (error) {
+            return res.status(500).send("Internal Server Error");
+        }
     }
 })
 
@@ -187,7 +231,6 @@ async function get_user_id_token(token) {
             (err, results) => {
                 if (err) {
                     reject(err);
-                    console.log(err);
                 } else if (results.length === 0) {
                     resolve(null); // Token not found
                 } else {
@@ -247,7 +290,7 @@ async function create_assignment(assignment) {
     });
 }
 
-async function get_assignment_ref(id) {
+async function get_course_assignment(id) {
     return new Promise((resolve, reject) => {
         connection.query(
             'SELECT * FROM assignmentref WHERE id = ?',
@@ -313,6 +356,22 @@ async function delete_token(token) {
     });
 }
 
+async function delete_course_assignment(id) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'DELETE FROM assignmentref WHERE id = ?',
+            [id],
+            (err, res) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(res);
+                }
+            }
+        );
+    });
+}
+
 async function get_course(id) {
     return new Promise((resolve, reject) => {
         connection.query(
@@ -325,6 +384,24 @@ async function get_course(id) {
                     resolve(null);
                 } else {
                     resolve(results[0]);
+                }
+            }
+        );
+    });
+}
+
+async function get_course_assignments(id) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'SELECT * FROM assignmentref WHERE course = ?',
+            [id],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else if (results.length === 0) {
+                    resolve(null);
+                } else {
+                    resolve(results);
                 }
             }
         );
