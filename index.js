@@ -67,11 +67,12 @@ app.post('/api/loginaccount', async (req, res) => {
     try {
         const { email, name, type, token } = req.body;
         const account = await get_account_email(email);
-        if (account == null && authType == 'google')  {
+        console.log(account)
+        if (account == null && type == 'google')  {
             const insertId = await create_account({ email, name, type });
             await create_token(token, insertId);
             return res.status(201).json({ message: 'Account created successfully' });
-        } else if (account == null && authType == 'teacher') {
+        } else if (account == null && type == 'teacher') {
             return res.status(500);
         } else if (account != null) {
             const id = account.id;
@@ -135,7 +136,7 @@ app.post('/api/insertassignment', async (req, res) => {
 app.get('/api/getcourse', async (req, res) => { 
     const { token, id } = req.query;
     const teacherAccount = await get_user_token(token);
-    const course = await get_course(id);
+    const course = await get_course(parseInt(id));
     if (course == null || teacherAccount == null){
         res.status(404).send("Course or teacher not found");
     }
@@ -147,7 +148,7 @@ app.get('/api/getcourse', async (req, res) => {
 app.get('/api/getassignmentrefs', async (req, res) => {
     const { token, id } = req.query;
     const teacherAccount = await get_user_token(token);
-    const course = await get_course(id);
+    const course = await get_course(parseInt(id));
     if (course == null || teacherAccount == null){
         res.status(404).send("Course or teacher not found");
     }
@@ -161,13 +162,25 @@ app.get('/api/getstudents', async (req, res) => {
     const { token, course } = req.query;
     const account = await get_user_token(token);
     if (account == null){
-        res.status(404).send("Account not found");
+        return res.status(404).send("Account not found");
     }
-    if ( token != null) {
+    if (course != null) {
+        const courseObj = await get_course(parseInt(course));
+        if (courseObj.teacher == account.id) {
+            const studentIds = await get_students_course(courseObj.id);
+            let content = []
+            for (id of studentIds) {
+                const student = await get_student(id.student);
+                content.push(student);
+                return res.status(201).json(content);
+            }
+            return res.status(201).json(students);
+        } else {
+            return res.status(404).send("Course not found");
+        }
+    } else {
         const students = await get_students_parent(account.id);
         return res.status(201).json(students);
-    } else if (course != null) {
-        //add course finding here
     }
 })
 
@@ -440,10 +453,46 @@ async function get_course_assignments(id) {
     });
 }
 
+async function get_student(id) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'SELECT * FROM students WHERE id = ?',
+            [id],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else if (results.length === 0) {
+                    resolve(null);
+                } else {
+                    resolve(results[0]);
+                }
+            }
+        );
+    });
+}
+
 async function get_students_parent(id) {
     return new Promise((resolve, reject) => {
         connection.query(
             'SELECT * FROM students WHERE parent = ?',
+            [id],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else if (results.length === 0) {
+                    resolve(null);
+                } else {
+                    resolve(results);
+                }
+            }
+        );
+    });
+}
+
+async function get_students_course(id) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'SELECT * FROM student_course WHERE course = ?',
             [id],
             (err, results) => {
                 if (err) {
