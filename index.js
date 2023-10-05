@@ -184,9 +184,8 @@ app.get('/api/getstudents', async (req, res) => {
             for (id of studentIds) {
                 const student = await get_student(id.student);
                 content.push(student);
-                return res.status(201).json(content);
             }
-            return res.status(201).json(students);
+            return res.status(201).json(content);
         } else {
             return res.status(404).send("Course not found");
         }
@@ -220,7 +219,7 @@ app.post('/api/deletestudent', async (req, res) => {
     const { token, id } = req.body;
     const account = await get_user_token(token);
     const student = await get_student(id);
-    if (course == null || account == null){
+    if (student == null || account == null){
         return res.status(404).send("Account or student not found");
     }
     if (account.id == student.parent) {
