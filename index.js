@@ -67,7 +67,6 @@ app.post('/api/loginaccount', async (req, res) => {
     try {
         const { email, name, type, token } = req.body;
         const account = await get_account_email(email);
-        console.log(account)
         if (account == null && type == 'google')  {
             const insertId = await create_account({ email, name, type });
             await create_token(token, insertId);
@@ -135,6 +134,7 @@ app.post('/api/insertassignment', async (req, res) => {
 
 app.get('/api/getcourse', async (req, res) => { 
     const { token, id } = req.query;
+    if (id == null) return res.status(404).send;
     const teacherAccount = await get_user_token(token);
     const course = await get_course(parseInt(id));
     if (course == null || teacherAccount == null){
@@ -155,6 +155,18 @@ app.get('/api/getassignmentrefs', async (req, res) => {
     if (course.teacher == teacherAccount.id) {
         const assignments = await get_course_assignments(id);
         return res.status(201).json(assignments);
+    }
+})
+
+app.get('/api/getstudent', async (req, res) => {
+    const { token, id } = req.query;
+    const account = await get_user_token(token);
+    const student = await get_student(id);
+    if (student == null || account == null){
+        return res.status(404).send("Account or student not found");
+    }
+    if (account.id == student.parent) {
+        return res.status(201).json(student);
     }
 })
 
@@ -219,6 +231,25 @@ app.post('/api/deletestudent', async (req, res) => {
             return res.status(500).send("Internal Server Error");
         }
     }
+})
+
+app.get('/api/getstudentcourses', async (req, res) => {
+    const { token, studentid } = req.query;
+    const account = await get_user_token(token);
+    const student = await get_student(studentid);
+    if (student == null || account == null){
+        return res.status(404).send("Account or student not found");
+    }
+    if (account.id != student.parent) {
+        return res.status(404).send("Account not foundded");
+    }
+    const courses = await get_courses(studentid);
+    let content = []
+    for (id of courses) {
+        const course = await get_course(id.course);
+        content.push(course);
+    }
+    return res.status(201).json(content);
 })
 
 // Start the Express server
@@ -517,6 +548,24 @@ async function delete_student(id) {
                     reject(err);
                 } else {
                     resolve(res);
+                }
+            }
+        );
+    });
+}
+
+async function get_courses(id) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'SELECT * FROM student_course WHERE student = ?',
+            [id],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else if (results.length === 0) {
+                    resolve(null);
+                } else {
+                    resolve(results);
                 }
             }
         );
