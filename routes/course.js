@@ -27,6 +27,9 @@ router.get('/getstudentcourses', async (req, res) => {
     }
     const courses = await db.get_courses(studentid);
     let content = []
+    if (courses == null) {
+        return res.status(404).send("Course not found");
+    }
     for (id of courses) {
         const course = await db.get_course(id.course);
         content.push(course);
