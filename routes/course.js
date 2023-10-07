@@ -12,6 +12,8 @@ router.get('/getcourse', async (req, res) => {
     }
     if (course.teacher == teacherAccount.id) {
         res.status(201).json(course);
+    } else {
+        return res.status(404).send();
     }
 })
 
@@ -25,7 +27,7 @@ router.get('/getstudentcourses', async (req, res) => {
     if (account.id != student.parent) {
         return res.status(404).send("Account not foundded");
     }
-    const courses = await db.get_courses(studentid);
+    const courses = await db.get_courses_student(studentid);
     let content = []
     if (courses == null) {
         return res.status(404).send("Course not found");
@@ -35,6 +37,20 @@ router.get('/getstudentcourses', async (req, res) => {
         content.push(course);
     }
     return res.status(201).json(content);
+})
+
+router.get('/getteachercourses', async (req, res) => {
+    const { token } = req.query;
+    const account = await db.get_user_token(token);
+    if (account == null || account.auth_type != "teacher") {
+        return res.status(404).send("Account not found");
+    }
+    const courses = await db.get_courses_teacher(account.id);
+    if (courses == null) {
+        return res.status(201).json([]);
+    } else {
+        return res.status(201).json(courses);
+    }
 })
 
 module.exports = router;

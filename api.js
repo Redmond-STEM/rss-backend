@@ -281,7 +281,7 @@ async function delete_student(id) {
     });
 }
 
-async function get_courses(id) {
+async function get_courses_student(id) {
     return new Promise((resolve, reject) => {
         connection.query(
             'SELECT * FROM student_course WHERE student = ?',
@@ -297,6 +297,24 @@ async function get_courses(id) {
             }
         );
     });
+}
+
+async function get_courses_teacher(id) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'SELECT * FROM courses WHERE teacher = ?',
+            [id],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else if (results.length === 0) {
+                    resolve(null);
+                } else {
+                    resolve(results);
+                }
+            }
+        );
+    })
 }
 
 async function get_score(ref_id, student) {
@@ -386,7 +404,8 @@ module.exports = {
     get_students_parent,
     get_students_course,
     delete_student,
-    get_courses,
+    get_courses_student,
+    get_courses_teacher,
     get_score,
     get_score_exist,
     set_score
