@@ -6,10 +6,10 @@ const app = express();
 const port = process.env.PORT || 5000; // Set the port for your server
 
 const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'rsswebsite',
-    database: 'rss'
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password:  process.env.DB_PASS || 'rsswebsite',
+    database: process.env.DB_NAME || 'rss'
 });
 
 const cors = require('cors');
