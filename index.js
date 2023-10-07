@@ -1,16 +1,12 @@
 const express = require('express');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
+const dotenv = require('dotenv')
 
 const app = express();
 const port = process.env.PORT || 5000; // Set the port for your server
 
-const connection = mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password:  process.env.DB_PASS || 'rsswebsite',
-    database: process.env.DB_NAME || 'rss'
-});
+const connection = mysql.createConnection(process.env.DATABASE_URL)
 
 const cors = require('cors');
 
