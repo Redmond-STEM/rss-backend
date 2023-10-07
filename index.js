@@ -170,6 +170,53 @@ app.get('/api/getstudent', async (req, res) => {
     }
 })
 
+app.get('/api/getassignmentref', async (req, res) => {
+    const { token, id } = req.query;
+    const assignment = await get_course_assignment(parseInt(id));
+    const account = await get_user_token(token);
+    const course = await get_course(assignment.course);
+    if (assignment == null || account == null){
+        return res.status(404).send("Assignment or teacher not found");
+    }
+    if (course.teacher != account.id) {
+        return res.status(404).send("Course not found");
+    }
+    return res.status(201).json(assignment);
+})
+
+app.get('/api/getassignment', async (req, res) => {
+    const { token, ref_id, studentid } = req.query;
+    const account = await get_user_token(token);
+    const student = await get_student(studentid);
+    const assignment = await get_score(ref_id, studentid);
+    const ref = await get_course_assignment(ref_id);
+    const course = await get_course(ref.course);
+    if (course.teacher != account.id && student.parent != account.id) {
+        return res.status(404).send("Student not found");
+    } else if (assignment == null) {
+        return res.status(404).send("Assignment not found");
+    } else {
+        return res.status(201).json(assignment);
+    }
+})
+
+app.post('/api/setassignment', async (req, res) => {
+    const { token, refid, studentid, score } = req.body;
+    ref_id = parseInt(refid);
+    const account = await get_user_token(token);
+    const assignment = await get_score(ref_id, studentid);
+    const ref = await get_course_assignment(ref_id);
+    const course = await get_course(ref.course);
+    if (course.teacher != account.id) {
+        return res.status(404).send("Student not found");
+    } else if (ref == null) {
+        return res.status(404).send("Assignment not found");
+    } else {
+        const response = await set_score(ref_id, studentid, parseInt(score));
+        return res.status(201).json(response);
+    }
+})
+
 app.get('/api/getstudents', async (req, res) => {
     const { token, course } = req.query;
     const account = await get_user_token(token);
@@ -569,4 +616,73 @@ async function get_courses(id) {
             }
         );
     });
+}
+
+async function get_score(ref_id, student) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'SELECT * FROM assignments WHERE ref_id = ? AND student = ?',
+            [ref_id, student],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else if (results.length === 0) {
+                    resolve(null);
+                } else {
+                    resolve(results[0]);
+                }
+            }
+        );
+    });
+}
+
+async function get_score_exist(ref_id, student) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'SELECT COUNT(*) FROM assignments WHERE ref_id = ? AND student = ?',
+            [ref_id, student],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else if (results.length === null) {
+                    resolve(null);
+                } else {
+                    resolve(results[0]);
+                }
+            }
+        );
+    });
+}
+
+async function set_score(ref_id, student, score) {
+    const count = await get_score_exist(ref_id, student);
+    if (count["COUNT(*)"] > 0) {
+        return new Promise((resolve, reject) => {
+            connection.query(
+                'UPDATE assignments SET score = ? WHERE ref_id = ? AND student = ?',
+                [score, ref_id, student],
+                (err, res) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(res);
+                    }
+                }
+            );
+        });
+    } else {
+        return new Promise((resolve, reject) => {
+            connection.query(
+                'INSERT INTO assignments (ref_id, student, score) VALUES (?, ?, ?)',
+                [ref_id, student, score],
+                (err, res) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(res);
+                    }
+                }
+            );
+        });
+    }
 }
