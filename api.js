@@ -317,6 +317,38 @@ async function get_courses_teacher(id) {
     })
 }
 
+async function get_courses() {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'SELECT * FROM courses',
+            [],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results);
+                }
+            }
+        );
+    })
+}
+
+async function add_student_course(student, course) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'INSERT INTO student_course (student, course) VALUES (?, ?)',
+            [student, course],
+            (err, res) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(res);
+                }
+            }
+        );
+    });
+}
+
 async function get_score(ref_id, student) {
     return new Promise((resolve, reject) => {
         connection.query(
@@ -333,6 +365,36 @@ async function get_score(ref_id, student) {
             }
         );
     });
+}
+
+async function get_scores_all(student) {
+    return new Promise((resolve, reject) => {
+        connection.query(
+            'SELECT * FROM assignments WHERE student = ?',
+            [student],
+            (err, results) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results);
+                }
+            }
+        );
+    });
+}
+
+async function get_scores(course, student) {
+    const scores = await get_scores_all(student);
+    let content = []
+    for (score of scores) {
+        const ref = await get_course_assignment(score.ref_id);
+        if (ref.course == course) {
+            score.name = ref.name;
+            score.weight = ref.weight;
+            content.push(score)
+        }
+    }
+    return content
 }
 
 async function get_score_exist(ref_id, student) {
@@ -355,7 +417,7 @@ async function get_score_exist(ref_id, student) {
 
 async function set_score(ref_id, student, score) {
     const count = await get_score_exist(ref_id, student);
-    if (count["COUNT(*)"] > 0) {
+    if (count["COUNT(*)"] > 0 || count["count(*)"] > 0) {
         return new Promise((resolve, reject) => {
             connection.query(
                 'UPDATE assignments SET score = ? WHERE ref_id = ? AND student = ?',
@@ -406,7 +468,10 @@ module.exports = {
     delete_student,
     get_courses_student,
     get_courses_teacher,
+    get_courses,
+    add_student_course,
     get_score,
+    get_scores,
     get_score_exist,
     set_score
 };

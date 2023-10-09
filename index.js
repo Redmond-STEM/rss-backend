@@ -9,6 +9,7 @@ const assignmentRouter = require('./routes/assignment');
 const assignmentRefRouter = require('./routes/assignmentref');
 const courseRouter = require('./routes/course');
 const studentRouter = require('./routes/student');
+const paymentRouter = require('./routes/payment');
 
 const cors = require('cors');
 
@@ -20,6 +21,7 @@ app.use('/api', assignmentRouter)
 app.use('/api', assignmentRefRouter)
 app.use('/api', courseRouter)
 app.use('/api', studentRouter)
+app.use('/api', paymentRouter)
 
 
 // Start the Express server

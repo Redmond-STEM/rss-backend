@@ -34,4 +34,22 @@ router.post('/setassignment', async (req, res) => {
     }
 })
 
+router.get('/getassignments', async (req, res) => {
+    const { token, courseid, studentid } = req.query;
+    const account = await db.get_user_token(token);
+    const student = await db.get_student(studentid);
+    const course = await db.get_course(courseid);
+    if (course == null) {
+        return res.status(404).send("Course not found");    
+    }
+    const assignments = await db.get_scores(parseInt(courseid), parseInt(studentid));
+    if (course.teacher != account.id && student.parent != account.id) {
+        return res.status(404).send("Student not found");
+    } else if (assignments == null) {
+        return res.status(201).json([]);
+    } else {
+        return res.status(201).json(assignments);
+    }
+})
+
 module.exports = router;

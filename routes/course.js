@@ -53,4 +53,13 @@ router.get('/getteachercourses', async (req, res) => {
     }
 })
 
+router.get('/getcourses', async (req, res) => { 
+    const courses = await db.get_courses();
+    res.json(courses);
+})
+
+router.get('/getavailablecourses', async(req, res) => {
+    const courses = await db.get_courses();
+})
+
 module.exports = router;

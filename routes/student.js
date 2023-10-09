@@ -52,22 +52,4 @@ router.get('/getstudents', async (req, res) => {
     }
 })
 
-router.post('/deletestudent', async (req, res) => {
-    // for create/delete, we need to remove them from the assignments table too
-    const { token, id } = req.body;
-    const account = await db.get_user_token(token);
-    const student = await db.get_student(id);
-    if (student == null || account == null){
-        return res.status(404).send("Account or student not found");
-    }
-    if (account.id == student.parent) {
-        try {
-            await db.delete_student(id);
-            return res.status(201).send("Assignment deleted successfully");
-        } catch (error) {
-            return res.status(500).send("Internal Server Error");
-        }
-    }
-})
-
 module.exports = router;

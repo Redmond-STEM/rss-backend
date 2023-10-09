@@ -53,6 +53,7 @@ router.post('/loginaccount', async (req, res) => {
         } else if (account != null) {
             const id = account.id;
             await db.create_token(token, id);
+            //update account details here
             res.status(201).json({ message: 'Token created successfully' });
         }
     } catch (error) {
