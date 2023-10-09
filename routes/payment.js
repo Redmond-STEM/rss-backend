@@ -4,6 +4,7 @@ const db = require('../api.js')
 const dotenv = require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const randomtoken = require('random-web-token')
+const links = require('../links.json')
 
 const payments = []
 
@@ -26,8 +27,12 @@ router.post("/createpayment", async (req, res) => {
         student: studentid
     })
 
+    if (links[course.name] == null) return res.status(404).send("Course not found");
+
+    const link = links[course.name];
+
     // Construct the Stripe payment URL
-    const url = process.env.STRIPE_URL + "?client_reference_id=" + paymentToken;
+    const url = link + "?client_reference_id=" + paymentToken;
     res.status(200).json({ payment_url: url });
 });
 
