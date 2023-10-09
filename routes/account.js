@@ -24,21 +24,6 @@ router.get('/getaccount', async (req, res) => {
     }
 });
 
-router.get('/getaccounttoken', async (req, res) => {
-    try {
-        const { token } = req.query;
-        const id = await db.get_user_id_token(token);
-        if (id != null) {
-            res.json(id);
-        } else {
-            res.status(404).json({ message: 'Account not found' });
-        }
-    } catch (error) {
-        console.error('Error fetching account:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
 // Define your API route to create an account
 router.post('/loginaccount', async (req, res) => {
     try {
