@@ -1,8 +1,6 @@
 const express = require('express')
 const router = express.Router()
 const db = require('../api.js')
-const dotenv = require('dotenv').config()
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const randomtoken = require('random-web-token')
 const links = require('../links.json')
 
