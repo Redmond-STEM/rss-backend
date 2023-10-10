@@ -333,6 +333,19 @@ async function get_courses() {
     })
 }
 
+async function get_courses_future() {
+    const content = []
+    const courses = await get_courses();
+    for (course of courses) {
+        let shouldPush = true;
+        if (Date.now() < new Date(course.end_date) - 86400000 * 3) {
+            shouldPush = false;
+        }
+        if (shouldPush) content.push(course);
+    }
+    return content;
+}
+
 async function add_student_course(student, course) {
     return new Promise((resolve, reject) => {
         connection.query(
@@ -469,6 +482,7 @@ module.exports = {
     get_courses_student,
     get_courses_teacher,
     get_courses,
+    get_courses_future,
     add_student_course,
     get_score,
     get_scores,

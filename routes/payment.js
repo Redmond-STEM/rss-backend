@@ -44,9 +44,9 @@ router.post("/verifypayment", async (req, res) => {
             const course = payment.course;
             await db.add_student_course(student, course);
             payments.splice(payments.indexOf(payment), 1);
-            res.status(200).json({ message: "Payment successful" });
+            return res.status(200).json({ message: "Payment successful" });
         } else {
-            res.status(404).json({ message: "Payment not found" });
+            return res.status(404).json({ message: "Payment not found" });
         }
     }
 })
