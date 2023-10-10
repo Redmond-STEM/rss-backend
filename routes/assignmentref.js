@@ -5,7 +5,7 @@ const db = require('../api.js')
 router.get('/getassignmentrefs', async (req, res) => {
     const { token, id } = req.query;
     const teacherAccount = await db.get_user_token(token);
-    const course = await db.get_course(parseInt(id));
+    const course = await db.get_course(id);
     if (course == null || teacherAccount == null){
         res.status(404).send("Course or teacher not found");
     }
@@ -17,7 +17,7 @@ router.get('/getassignmentrefs', async (req, res) => {
 
 router.get('/getassignmentref', async (req, res) => {
     const { token, id } = req.query;
-    const assignment = await db.get_course_assignment(parseInt(id));
+    const assignment = await db.get_course_assignment(id);
     const account = await db.get_user_token(token);
     const course = await db.get_course(assignment.course);
     if (assignment == null || account == null){
