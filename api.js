@@ -337,7 +337,9 @@ async function get_courses_future() {
     const content = []
     const courses = await get_courses();
     for (course of courses) {
-        if (Date.now() < new Date(course.end_date) - 86400000 * 3) {
+        let deadline = new Date(course.startdate);
+        deadline.setDate(deadline.getDate() - 3);
+        if (Date.now() <= deadline) {
             content.push(course);
         }
     }

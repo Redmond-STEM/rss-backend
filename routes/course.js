@@ -65,9 +65,11 @@ router.get('/getavailablecourses', async (req, res) => {
     const studentCourses = await db.get_courses_student(studentid);
     for (course of courses) {
         let shouldPush = true;
-        for (registration of studentCourses) {
-            if (registration.course === course.id) {
-                shouldPush = false;
+        if (studentCourses != null) {
+            for (registration of studentCourses) {
+                if (registration.course === course.id) {
+                    shouldPush = false;
+                }
             }
         }
         if (shouldPush) content.push(course);
