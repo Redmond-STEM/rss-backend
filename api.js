@@ -337,11 +337,9 @@ async function get_courses_future() {
     const content = []
     const courses = await get_courses();
     for (course of courses) {
-        let shouldPush = true;
         if (Date.now() < new Date(course.end_date) - 86400000 * 3) {
-            shouldPush = false;
+            content.push(course);
         }
-        if (shouldPush) content.push(course);
     }
     return content;
 }
