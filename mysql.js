@@ -1,6 +1,6 @@
 const mysql = require('mysql2');
 
-const connection = mysql.createConnection("mysql://8ybjpskzv2rk1d2m4j29:pscale_pw_xxhPoSDQVLKyEIn3ioGofj21pkp8Fs9wVNgbN32VePn@aws.connect.psdb.cloud/rss?ssl={\"rejectUnauthorized\":true}");
+const connection = mysql.createConnection(process.env.DATABASE_URL || process.env.APPSETTING_DATABASE_URL);
 
 connection.connect((err) => {
     if (err) {
