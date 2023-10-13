@@ -27,7 +27,7 @@ router.get('/getaccount', async (req, res) => {
 // Define your API route to create an account
 router.post('/loginaccount', async (req, res) => {
     try {
-        const { email, name, type, token } = req.body;
+        const { email, name, type, token, password } = req.body;
         const account = await db.get_account_email(email);
         if (account == null && type == 'google')  {
             const insertId = await db.create_account({ email, name, type });
@@ -35,7 +35,15 @@ router.post('/loginaccount', async (req, res) => {
             return res.status(201).json({ message: 'Account created successfully' });
         } else if (account == null && type == 'teacher') {
             return res.status(500);
-        } else if (account != null) {
+        } else if (account != null && type == 'teacher') {
+            const correctPass = account.password;
+            if (correctPass === password) {
+                await db.create_token(token, account.id);
+                return res.status(201).json({ message: 'Token created successfully' });
+            } else {
+                return res.status(404).send("Password incorrect");
+            }
+        } else if (account != null && type == 'google') {
             const id = account.id;
             await db.create_token(token, id);
             //update account details here
